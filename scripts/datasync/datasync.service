@@ -1,0 +1,7 @@
+[Unit]
+Description=Synchronize data partition to its mirror
+After=local-fs.target multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/datasync

@@ -1,0 +1,9 @@
+[Unit]
+Description=Daily synchronization of data partition to backup location
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+
+[Install]
+WantedBy=timers.target
