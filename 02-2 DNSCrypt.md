@@ -8,6 +8,16 @@ _Refer to https://github.com/pi-hole/pi-hole/wiki/DNSCrypt-2.0 for more informat
 sudo apt install dnscrypt-proxy
 ```
 
+While running this command you can encounter error like this:
+
+```
+Job for dnscrypt-proxy.socket failed.
+See "systemctl status dnscrypt-proxy.socket" and "journalctl -xe" for details.
+A dependency job for dnscrypt-proxy.service failed. See 'journalctl -xe' for details.
+```
+
+It's because it tries to use the same port as Pi-Hole, you can ignore it and proceed.
+
 ## For read only filesystem:
 
 ```bash
