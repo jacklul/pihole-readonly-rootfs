@@ -18,7 +18,9 @@ A dependency job for dnscrypt-proxy.service failed. See 'journalctl -xe' for det
 
 It's because it tries to use the same port as Pi-Hole, you can ignore it and proceed.
 
-## For read only filesystem:
+## For read only filesystem
+
+Only when [followed this](/01%20Read-only%20system.md)!
 
 ```bash
 sudo mkdir -p /data/etc

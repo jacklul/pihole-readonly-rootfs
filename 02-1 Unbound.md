@@ -44,7 +44,9 @@ sudo systemctl enable unbound-roothints.timer
 sudo systemctl start unbound-roothints.service
 ```
 
-## For read only filesystem:
+## For read only filesystem
+
+Only when [followed this](/01%20Read-only%20system.md)!
 
 ```bash
 sudo mkdir -p /data/etc

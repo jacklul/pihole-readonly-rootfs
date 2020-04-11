@@ -22,7 +22,9 @@ sudo chmod +x /usr/local/bin/cloudflared
 cloudflared -v
 ```
 
-## For read only filesystem:
+## For read only filesystem
+
+Only when [followed this](/01%20Read-only%20system.md)!
 
 ```bash
 sudo mkdir -p /data/etc
