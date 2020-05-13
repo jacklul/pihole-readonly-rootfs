@@ -5,6 +5,7 @@ if [[ $(/usr/bin/id -u) -ne 0 ]]; then
 	exit
 fi
 
+set -e
 command -v rsync >/dev/null 2>&1 || { echo "This script requires rsync to run, install it with 'sudo apt install rsync'."; exit 1; }
 
 if [ ! -b "/dev/mmcblk0p3" ]; then
@@ -14,7 +15,7 @@ if [ ! -b "/dev/mmcblk0p3" ]; then
 fi
 
 SPATH=$(dirname $0)
-REMOTE_URL=https://raw.githubusercontent.com/jacklul/pihole-read-only-rootfs/master/scripts/databackup
+REMOTE_URL=https://raw.githubusercontent.com/jacklul/pihole-readonly-rootfs/master/scripts/databackup
 
 if [ -f "$SPATH/databackup.sh" ] && [ -f "$SPATH/databackup.service" ] && [ -f "$SPATH/databackup.timer" ]; then
 	cp -v $SPATH/databackup.sh /usr/local/sbin/databackup && \
