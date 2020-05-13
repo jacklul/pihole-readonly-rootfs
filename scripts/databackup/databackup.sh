@@ -7,7 +7,7 @@ if [[ $(/usr/bin/id -u) -ne 0 ]]; then
 	exit
 fi
 
-LOCKFILE=/tmp/$(basename $0).lock
+LOCKFILE=/var/lock/$(basename $0)
 CONFIG_FILE=/etc/databackup.conf
 DATA_MOUNTPOINT=/data
 BACKUP_DESTINATION=/home/pi/databackup
@@ -17,12 +17,13 @@ if [ -f "${CONFIG_FILE}" ]; then
 	. ${CONFIG_FILE}
 fi
 
-if [ ! -f "$LOCKFILE" ]; then
-	touch $LOCKFILE
-else
-	echo "Already running. (LOCKFILE: ${LOCKFILE})"
-	exit 6
+PID=$(cat ${LOCKFILE} 2> /dev/null || echo '')
+if [ -e ${LOCKFILE} ] && [ ! -z "$PID" ] && kill -0 $PID; then
+    echo "Script is already running!"
+    exit 6
 fi
+
+echo $$ > ${LOCKFILE}
 
 function unmountDestination() {
 	if [ ! -z "$BACKUP_MOUNT" ] && mount | grep $BACKUP_MOUNT > /dev/null; then
