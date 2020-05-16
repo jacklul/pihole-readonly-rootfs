@@ -76,10 +76,11 @@ sudo nano /etc/unbound/unbound.conf.d/pi-hole.conf
 ```
 ```
 server:
+	# Log only essentials
     verbosity: 1
 
     # If no logfile is specified, syslog is used
-    #logfile: "/var/log/unbound.log"
+    logfile: "/var/log/unbound.log"
 
     # Listen only on local address
     interface: 127.0.0.1
