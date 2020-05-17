@@ -16,7 +16,7 @@ Standard first time setup tasks:
 - `sudo apt update && sudo apt upgrade -y`
 - enabling password protected sudo for the 'pi' user (replace `NOPASSWD` with `PASSWD` in `/etc/sudoers.d/010_pi-nopasswd`)
 - enabling kernel panic reboot (`sudo sh -c 'echo "kernel.panic = 10" > /etc/sysctl.conf'`)
-11
+
 **If your Pi will be exposed to the public you should either disable or remove default `pi` user and create a new admin account.**
 
 I recommend to use SSH keys and disable password authentication:
@@ -36,7 +36,7 @@ sudo systemctl restart sshd.service
 
 ## Re-partitioning
 
-Raspbian probably auto-expanded filesystem on first boot to fill the SD card - we don't want that - shutdown the Pi, take the SD card out and insert it into computer's card reader for repartitioning.
+Raspbian probably auto-expanded filesystem on first boot to fill the SD card - we don't want that - shutdown the Pi (`sudo shutdown -r now`), take the SD card out and insert it into computer's card reader for repartitioning.
 Shrink rootfs partition to reasonable size (around 4-5GB should be fine for simple projects) and create two same-sized data partitions (preferably at the end of the SD card).
 
 _If your card is small you can create just one data partition - but you will not have backup in case it becomes corrupted._
@@ -146,10 +146,10 @@ PARTUUID=6c586e13-02  /      ext4  defaults,noatime,ro                        0 
 PARTUUID=6c586e13-03  /data  ext4  defaults,noatime,nofail,errors=remount-ro  0 2
 
 # RAMdisk
-tmpfs  /tmp      tmpfs  defaults,noatime,nosuid,nodev,noexec,mode=1777,size=100M  0 0
-/tmp   /var/tmp  none   bind,nofail                                               0 0
-tmpfs  /var/log  tmpfs  defaults,noatime,nosuid,nodev,noexec,mode=0755            0 0
-tmpfs  /mnt      tmpfs  defaults,noatime,size=1M                                  0 0
+tmpfs  /tmp      tmpfs  defaults,noatime,mode=1777,size=100M  0 0
+/tmp   /var/tmp  none   bind,nofail                           0 0
+tmpfs  /var/log  tmpfs  defaults,noatime,mode=0755            0 0
+tmpfs  /mnt      tmpfs  defaults,noatime,size=1M              0 0
 ```
 
 Remount everything with `sudo mount -a`. 
@@ -184,6 +184,12 @@ And add binds to `/etc/fstab`:
 ```
 
 Apply changes - `sudo mount -a`.
+
+You might need to run these again:
+```bash
+sudo mount -o remount,rw /
+sudo mount -o remount,rw /boot
+```
 
 Add an override in **logrotate** configuration for all log files:
 
@@ -252,3 +258,5 @@ ro
 
 Reboot the system - `sudo reboot`.
 From now on the system is working in read-only mode.
+
+## [Next: Installing Pi-hole](/02%20Pi-hole.md)

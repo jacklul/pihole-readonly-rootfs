@@ -2,7 +2,7 @@
 
 **This assumes system is already set up as read-only.**
 
-Install Pi-hole normally - `wget -O - https://install.pi-hole.net | sudo bash`, configure it the way you want it.
+Install Pi-hole normally - `wget -O - https://install.pi-hole.net | sudo bash`, configure it the way you want it (make the system writable with `rw` command before installing, obviously).
 
 Optionally you might want to set `DBINTERVAL` in `/etc/pihole/pihole-FTL.conf` to something bigger than default `1 minute` (5 minutes should be good).
 
@@ -104,3 +104,5 @@ Common configurations:
 - [Unbound](/02-1%20Unbound.md) (recursive)
 - [DNSCrypt](/02-2%20DNSCrypt.md) (DNS over HTTPS using Cloudflare)
 - [Cloudflared](/02-3%20Cloudflared.md) (DNS over HTTPS using Cloudflare)
+
+You should install [Unbound](/02-1%20Unbound.md) in most cases.

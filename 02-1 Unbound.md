@@ -71,75 +71,79 @@ sudo mount -a
 
 ## Configuration
 
+This is slightly modified config provided on [Pi-hole's website](https://docs.pi-hole.net/guides/unbound/).
+
 ```bash
 sudo nano /etc/unbound/unbound.conf.d/pi-hole.conf
 ```
 ```
 server:
 	# Log only essentials
-    verbosity: 1
+	verbosity: 1
 
-    # If no logfile is specified, syslog is used
-    logfile: "/var/log/unbound.log"
+	# If no logfile is specified, syslog is used
+	logfile: "/var/log/unbound.log"
 
-    # Listen only on local address
-    interface: 127.0.0.1
+	# Listen only on local address
+	interface: 127.0.0.1
 
-    # Server port
-    port: 5053
+	# Server port
+	port: 5053
 
-    # Enable or disable whether specific queries are answered or issued.
-    do-ip4: yes
-    do-ip6: yes
-    do-udp: yes
-    do-tcp: yes
+	# Enable or disable whether specific queries are answered or issued.
+	do-ip4: yes
+	do-ip6: yes
+	do-udp: yes
+	do-tcp: yes
 
-    # Use this only when you downloaded the list of primary root servers!
-    root-hints: "/var/lib/unbound/root.hints"
+	# Use this only when you downloaded the list of primary root servers!
+	root-hints: "/var/lib/unbound/root.hints"
 
-    # Trust glue only if it is within the servers authority
-    harden-glue: yes
+	# One thread should be sufficient, can be increased on beefy machines.
+	# In reality for most users running on small networks or on a single machine it should be unnecessary to seek performance enhancement by increasing num-threads above 1.
+	num-threads: 1
 
-    # Require DNSSEC data for trust-anchored zones, if such data is absent, the zone becomes BOGUS
-    harden-dnssec-stripped: yes
+	# Minimum and maximum TTL to keep messages in the cache
+	cache-min-ttl: 300
+	cache-max-ttl: 86400
 
-    # Don't use Capitalization randomization as it known to cause DNSSEC issues sometimes
-    # see https://discourse.pi-hole.net/t/unbound-stubby-or-dnscrypt-proxy/9378 for further details
-    use-caps-for-id: no
+	# Number of bytes size to advertise as the EDNS reassembly buffer size
+	edns-buffer-size: 1472
 
-    # Reduce EDNS reassembly buffer size.
-    # Suggested by the unbound man page to reduce fragmentation reassembly problems
-    edns-buffer-size: 1472
+	# Ensure kernel buffer is large enough to not lose messages in traffic spikes
+	so-rcvbuf: 1m
 
-    # Perform prefetching of close to expired message cache entries
-    # This only applies to domains that have been frequently queried
-    prefetch: yes
+	# Allow only access from the local machine
+	access-control: 127.0.0.1/32 allow
 
-    # One thread should be sufficient, can be increased on beefy machines.
-    # In reality for most users running on small networks or on a single machine it should be unnecessary to seek performance enhancement by increasing num-threads above 1.
-    num-threads: 1
+	# Ensure privacy of local IP ranges
+	private-address: 192.168.0.0/16
+	private-address: 169.254.0.0/16
+	private-address: 172.16.0.0/12
+	private-address: 10.0.0.0/8
+	private-address: fd00::/8
+	private-address: fe80::/10
+	
+	# Require DNSSEC data for trust-anchored zones, if such data is absent, the zone becomes BOGUS
+	harden-dnssec-stripped: yes
 
-    # Ensure kernel buffer is large enough to not lose messages in traffic spikes
-    so-rcvbuf: 1m
+	# Trust glue only if it is within the server's authority
+	harden-glue: yes
 
-    # More cache memory
-    msg-cache-size: 16m
+	# Refuses version and hostname queries
+	hide-identity: yes
+	hide-version: yes
 
-    # Refuses version and hostname queries
-    hide-identity: yes
-    hide-version: yes
+	# Don't use Capitalization randomization as it known to cause DNSSEC issues sometimes
+	# see https://discourse.pi-hole.net/t/unbound-stubby-or-dnscrypt-proxy/9378 for further details
+	use-caps-for-id: no
 
-    # Tweak caching
-    cache-max-ttl: 86400
-    cache-min-ttl: 3600
+	# Cache elements are prefetched before they expire to keep the cache up to date
+	prefetch: yes
 
-    # Ensure privacy of local IP ranges
-    private-address: 192.168.0.0/16
-    private-address: 169.254.0.0/16
-    private-address: 172.16.0.0/12
-    private-address: 10.0.0.0/8
-    private-address: fd00::/8
-    private-address: fe80::/10
+	# Fetch the DNSKEYs earlier in the validation process
+	prefetch-key: yes
+
 ```
 [Configuration file reference](https://nlnetlabs.nl/documentation/unbound/unbound.conf/)
 
