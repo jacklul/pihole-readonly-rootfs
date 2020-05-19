@@ -71,7 +71,7 @@ sudo mount -a
 
 ## Configuration
 
-This is slightly modified config provided on [Pi-hole's website](https://docs.pi-hole.net/guides/unbound/).
+This is basically config provided on [Pi-hole's website](https://docs.pi-hole.net/guides/unbound/).
 
 ```bash
 sudo nano /etc/unbound/unbound.conf.d/pi-hole.conf
@@ -140,10 +140,6 @@ server:
 
 	# Cache elements are prefetched before they expire to keep the cache up to date
 	prefetch: yes
-
-	# Fetch the DNSKEYs earlier in the validation process
-	prefetch-key: yes
-
 ```
 [Configuration file reference](https://nlnetlabs.nl/documentation/unbound/unbound.conf/)
 
