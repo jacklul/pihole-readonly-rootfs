@@ -208,6 +208,7 @@ sudo nano /etc/logrotate.conf
 {
   daily
   rotate 1
+  minsize 1M
   copytruncate
   compress
   notifempty
