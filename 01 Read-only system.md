@@ -152,6 +152,8 @@ tmpfs  /var/log  tmpfs  defaults,noatime,mode=0755            0 0
 tmpfs  /mnt      tmpfs  defaults,noatime,size=1M              0 0
 ```
 
+_You can increase /tmp size as you wish - I recommend setting it to max 50% of total RAM_
+
 Remount everything with `sudo mount -a`. 
 
 To continue, we need the system to be writable so:
