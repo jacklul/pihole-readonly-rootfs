@@ -241,7 +241,7 @@ Credits for this go to [Andreas Schallwig](https://medium.com/swlh/make-your-ras
 
 Install my [script](/scripts/datasync/):
 ```bash
-wget -q -O - https://raw.githubusercontent.com/jacklul/pihole-readonly-rootfs/master/scripts/datasync/install.sh | sudo bash
+wget -O - https://raw.githubusercontent.com/jacklul/pihole-readonly-rootfs/master/scripts/datasync/install.sh | sudo bash
 ```
 
 Whenever primary `/data` partition gets corrupted you will be able to replace `PARTUUID=6c586e13-03` in `/etc/fstab` with `PARTUUID=6c586e13-04` to use the backup partition, then fix or reformat the original one and synchronize the data. The script will detect which data partition is currently mounted and will always synchronize to the second.

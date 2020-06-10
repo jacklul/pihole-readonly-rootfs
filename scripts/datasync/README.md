@@ -6,5 +6,5 @@ It assumes that devices `/dev/mmcblk0p3` and `/dev/mmcblk0p4` are the data parti
 ### Install
 
 ```bash
-wget -q -O - https://raw.githubusercontent.com/jacklul/pihole-readonly-rootfs/master/scripts/datasync/install.sh | sudo bash
+wget -O - https://raw.githubusercontent.com/jacklul/pihole-readonly-rootfs/master/scripts/datasync/install.sh | sudo bash
 ```
