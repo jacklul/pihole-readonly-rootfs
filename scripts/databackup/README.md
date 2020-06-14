@@ -11,3 +11,5 @@ wget -O - https://raw.githubusercontent.com/jacklul/pihole-readonly-rootfs/maste
 
 Set the backup destination directory in `/etc/databackup.conf` file.
 (`/home/pi/databackup` by default)
+
+To exclude some files from the backup use `/etc/databackup-ignore.list` file.

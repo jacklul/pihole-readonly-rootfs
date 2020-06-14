@@ -12,6 +12,7 @@ CONFIG_FILE=/etc/databackup.conf
 DATA_MOUNTPOINT=/data
 BACKUP_DESTINATION=/home/pi/databackup
 BACKUP_MOUNT=
+EXCLUDE_FILE=/etc/databackup-ignore.list
 
 if [ -f "${CONFIG_FILE}" ]; then
 	. ${CONFIG_FILE}
@@ -52,11 +53,14 @@ fi
 
 mountDestination
 
+[ -f "$EXCLUDE_FILE" ] || { touch $EXCLUDE_FILE }
+
 echo "Synchronizing to ${BACKUP_DESTINATION}..."
 
 renice -n -20 $$ > /dev/null
 rsync -aHAXSv --delete --inplace \
 	--exclude={"${DATA_MOUNTPOINT}/lost+found"} \
+	--exclude-from="$EXCLUDE_FILE" \
 	$DATA_MOUNTPOINT/ $BACKUP_DESTINATION \
 
 STATUS=$?

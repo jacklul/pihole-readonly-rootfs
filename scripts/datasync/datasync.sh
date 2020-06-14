@@ -11,6 +11,7 @@ LOCKFILE=/var/lock/$(basename $0)
 CONFIG_FILE=/etc/datasync.conf
 DATA_MOUNTPOINT=/data
 MIRROR_MOUNTPOINT=/mnt/datamirror
+EXCLUDE_FILE=/etc/datasync-ignore.list
 
 if [ -f "${CONFIG_FILE}" ]; then
 	. ${CONFIG_FILE}
@@ -62,11 +63,14 @@ if [ ! -w "$MIRROR_MOUNTPOINT" ]; then
 	exit 1
 fi
 
+[ -f "$EXCLUDE_FILE" ] || { touch $EXCLUDE_FILE }
+
 echo "Synchronizing..."
 
 renice -n -20 $$ > /dev/null
 rsync -aHAXSv --delete --inplace \
 	--exclude={"${DATA_MOUNTPOINT}/lost+found"} \
+	--exclude-from="$EXCLUDE_FILE" \
 	$DATA_MOUNTPOINT/ $MIRROR_MOUNTPOINT \
 
 STATUS=$?

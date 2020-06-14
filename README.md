@@ -9,3 +9,5 @@ My approach adds data partition (and optionally a second 'mirror' one for backup
 	- [Unbound (recursive)](/02-1%20Unbound.md)
 	- [DNSCrypt (DNS over HTTPS)](/02-2%20DNSCrypt.md)
 	- [Cloudflared (DNS over HTTPS)](/02-3%20Cloudflared.md)
+
+_Guides last updated: 14-06-2020_

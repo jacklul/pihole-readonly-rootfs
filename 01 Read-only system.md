@@ -248,6 +248,22 @@ Whenever primary `/data` partition gets corrupted you will be able to replace `P
 
 Alternatively: [backup /data to any location](https://github.com/jacklul/pihole-readonly-rootfs/tree/master/scripts/databackup).
 
+To reduce further writes we can ignore files from sync/backup:
+
+```bash
+sudo nano /etc/datasync-ignore.list
+OR
+sudo nano /etc/databackup-ignore.list
+```
+
+```
+# This file contains stats and query logs
+/etc/pihole/pihole-FTL.db
+
+# Cached adlists
+/etc/pihole/*.domains
+```
+
 ## Final touch
 
 Edit boot command line and add `ro` parameter:
