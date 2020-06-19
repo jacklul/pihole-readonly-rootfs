@@ -53,8 +53,8 @@ sudo nano /opt/pihole/beforestart.sh
 if ! mount | grep /usr/bin/pihole-FTL > /dev/null && [ $(mount | sed -n -e "s/^\/dev\/.* on \/ .*(\(r[w|o]\).*/\1/p") = "ro" ]; then
         echo "Read only rootfs detected, copying and binding pihole-FTL binary..."
 
-        mkdir -p /mnt/pihole-tmp && mount tmpfs -t tmpfs /mnt/pihole-tmp
-        cp -fpv /usr/bin/pihole-FTL /mnt/pihole-tmp && mount -v -o bind /mnt/pihole-tmp/pihole-FTL /usr/bin/pihole-FTL
+        mkdir -p /mnt/pihole-FTL && mount tmpfs -t tmpfs /mnt/pihole-FTL
+        cp -fpv /usr/bin/pihole-FTL /mnt/pihole-FTL && mount -v -o bind /mnt/pihole-FTL/pihole-FTL /usr/bin/pihole-FTL
 fi
 ```
 
@@ -68,8 +68,8 @@ if mount | grep /usr/bin/pihole-FTL > /dev/null; then
         umount -v /usr/bin/pihole-FTL
 fi
 
-if mount | grep /mnt/pihole-tmp > /dev/null; then
-        umount -v /mnt/pihole-tmp && rmdir /mnt/pihole-tmp
+if mount | grep /mnt/pihole-FTL > /dev/null; then
+        umount -v /mnt/pihole-FTL && rmdir /mnt/pihole-FTL
 fi
 ```
 
