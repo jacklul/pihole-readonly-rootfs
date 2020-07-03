@@ -37,21 +37,20 @@ sudo systemctl restart sshd.service
 ## Re-partitioning
 
 Raspbian probably auto-expanded filesystem on first boot to fill the SD card - we don't want that - shutdown the Pi (`sudo shutdown -r now`), take the SD card out and insert it into computer's card reader for repartitioning.
-Shrink rootfs partition to reasonable size (around 4-5GB should be fine for simple projects) and create two same-sized data partitions (preferably at the end of the SD card).
-
-_If your card is small you can create just one data partition - but you will not have backup in case it becomes corrupted._
+Shrink rootfs partition to reasonable size (around 4-6GB should be fine for simple projects) and create a data partition (preferably at the end of the SD card).
 
 This is how it looks like in case of my 16GB card:
 
 | device         | fs    | label  | size   |
 |----------------|-------|--------|--------|
 | /dev/sda1      | fat32 | boot   | 256MB  |
-| /dev/sda2      | ext4  | rootfs | 5GB    |
-| - free space - |       |        | ~1.5GB |
-| /dev/sda3      | ext4  | data1  | 4GB    |
-| /dev/sda4      | ext4  | data2  | 4GB    |
+| /dev/sda2      | ext4  | rootfs | 6GB    |
+| - free space - |       |        | ~0.5GB |
+| /dev/sda3      | ext4  | data1  | 8GB    |
 
 Now you can put the card back into the Pi and boot it.
+
+If you're really worried about data partition getting corrupted you could create two of them and keep them in sync them with [this script](/scripts/datasync/) (make sure they are `/dev/sda3` and `/dev/sda4` respectively).
 
 _Alternatively you can repartition instantly after flashing but first boot might fail (stuck on IO LED just being on) and you will have to manually reboot the Pi._
 
@@ -235,27 +234,17 @@ PROMPT_COMMAND=set_bash_prompt
 
 Credits for this go to [Andreas Schallwig](https://medium.com/swlh/make-your-raspberry-pi-file-system-read-only-raspbian-buster-c558694de79#8c4f).
 
-## Synchronizing data partitions
+## Synchronizing data partitions (optional)
 
-**If you created two data partitions it will be a good idea to keep them synchronized in case of failure.**
+If you created two data partitions it will be a good idea to keep them synchronized in case of failure.
 
-Install my [script](/scripts/datasync/):
-```bash
-wget -O - https://raw.githubusercontent.com/jacklul/pihole-readonly-rootfs/master/scripts/datasync/install.sh | sudo bash
-```
+Install [this script](/scripts/datasync/) - whenever primary `/data` partition gets corrupted you will be able to replace `PARTUUID=6c586e13-03` in `/etc/fstab` with `PARTUUID=6c586e13-04` to use the backup partition, then fix or reformat the original one and synchronize the data. The script will detect which data partition is currently mounted and will always synchronize to the second.
 
-Whenever primary `/data` partition gets corrupted you will be able to replace `PARTUUID=6c586e13-03` in `/etc/fstab` with `PARTUUID=6c586e13-04` to use the backup partition, then fix or reformat the original one and synchronize the data. The script will detect which data partition is currently mounted and will always synchronize to the second.
-
-Alternatively: [backup /data to any location](https://github.com/jacklul/pihole-readonly-rootfs/tree/master/scripts/databackup).
-
-To reduce further writes we can ignore files from sync/backup:
+To reduce further writes we can ignore files from synchronization:
 
 ```bash
 sudo nano /etc/datasync-ignore.list
-OR
-sudo nano /etc/databackup-ignore.list
 ```
-
 ```
 # This file contains stats and query logs
 /etc/pihole/pihole-FTL.db
@@ -263,6 +252,34 @@ sudo nano /etc/databackup-ignore.list
 # Cached adlists
 /etc/pihole/*.domains
 ```
+
+## Backing up data partition (optional)
+
+[This script will backup /data to any location](/scripts/databackup), like network share or USB device.
+
+Select backup destination in `/etc/databackup.conf`:
+
+```bash
+# destination path to rsync to
+BACKUP_DESTINATION=/mnt/mynetworkshare/pihole-backup
+
+# if fstab entry exist it will be auto mounted before and unmounted after
+BACKUP_MOUNT=/mnt/mynetworkshare
+```
+
+You can ignore some useless files from the backup:
+
+```bash
+sudo nano /etc/databackup-ignore.list
+```
+```
+# This file contains stats and query logs
+/etc/pihole/pihole-FTL.db
+
+# Cached adlists
+/etc/pihole/*.domains
+```
+
 
 ## Final touch
 
