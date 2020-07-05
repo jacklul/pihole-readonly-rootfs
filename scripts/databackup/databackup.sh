@@ -57,7 +57,6 @@ mountDestination
 
 echo "Synchronizing to ${BACKUP_DESTINATION}..."
 
-renice -n -20 $$ > /dev/null
 rsync -aHAXSv --delete --inplace \
 	--exclude={"${DATA_MOUNTPOINT}/lost+found"} \
 	--exclude-from="$EXCLUDE_FILE" \
