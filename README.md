@@ -10,4 +10,4 @@ My approach adds data partition (and optionally a second 'mirror' one for backup
 	- [DNSCrypt (DNS over HTTPS)](/02-2%20DNSCrypt.md)
 	- [Cloudflared (DNS over HTTPS)](/02-3%20Cloudflared.md)
 
-_Guides last updated: 03-07-2020_
+_Guides last updated: 23-07-2020_

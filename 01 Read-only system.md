@@ -4,7 +4,7 @@
 
 We create additional writable data partition(s) that will contain required directories and files for the system to work correctly.
 
-Tested on Raspbian Buster Lite (September 2019) + Raspberry Pi Zero W
+Procedure tested on Raspbian Buster Lite (September 2019) + Raspberry Pi Zero W
 
 ## Initial setup
 
@@ -69,7 +69,14 @@ gpu_mem=16
 
 # Pi Zero only: Invert ACT LED state
 # Saves 'some' power by keeping the LED in off state when powered on, still blinks on IO
-dtparam=act_led_activelow=on
+# (for 4.x.x kernel change 'off' to 'on')
+dtparam=act_led_activelow=off
+
+# Disable LEDs permanently:
+#dtparam=act_led_trigger=none
+#dtparam=act_led_activelow=off
+#dtparam=pwr_led_trigger=none
+#dtparam=pwr_led_activelow=off
 
 # Enable hardware watchdog, automatic reboots when device hangs
 dtparam=watchdog=on
