@@ -22,28 +22,6 @@ sudo chmod +x /usr/local/bin/cloudflared
 cloudflared -v
 ```
 
-## For read only filesystem
-
-Only when [followed this](/01%20Read-only%20system.md)!
-
-```bash
-sudo mkdir -p /data/etc
-
-sudo cp -a /etc/cloudflared /data/etc/cloudflared
-```
-
-```bash
-sudo nano /etc/fstab
-```
-```
-# Cloudflared
-/data/etc/cloudflared  /etc/cloudflared  none  bind,nofail  0 0
-```
-
-```bash
-sudo mount -a
-```
-
 ## Configuration
 
 ```bash
@@ -85,6 +63,8 @@ KillMode=process
 [Install]
 WantedBy=multi-user.target
 ```
+
+---
 
 ```bash
 sudo systemctl start cloudflared

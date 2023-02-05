@@ -4,7 +4,7 @@
 
 We create additional writable data partition(s) that will contain required directories and files for the system to work correctly.
 
-Procedure tested on Raspbian Buster Lite (September 2019) + Raspberry Pi Zero W
+Procedure tested on Raspbian Buster and Bullseye Lite + Raspberry Pi Zero W
 
 ## Initial setup
 
@@ -36,7 +36,7 @@ sudo systemctl restart sshd.service
 
 ## Re-partitioning
 
-Raspbian probably auto-expanded filesystem on first boot to fill the SD card - we don't want that - shutdown the Pi (`sudo shutdown -r now`), take the SD card out and insert it into computer's card reader for repartitioning.
+System auto-expanded filesystem on first boot to fill the SD card - we don't want that - shutdown the Pi (`sudo shutdown -r now`), take the SD card out and insert it into computer's card reader for repartitioning.
 Shrink rootfs partition to reasonable size (around 4-6GB should be fine for simple projects) and create a data partition (preferably at the end of the SD card).
 
 This is how it looks like in case of my 16GB card:
@@ -46,13 +46,12 @@ This is how it looks like in case of my 16GB card:
 | /dev/sda1      | fat32 | boot   | 256MB  |
 | /dev/sda2      | ext4  | rootfs | 6GB    |
 | - free space - |       |        | ~0.5GB |
-| /dev/sda3      | ext4  | data1  | 8GB    |
+| /dev/sda3      | ext4  | data   | 8GB    |
 
 Now you can put the card back into the Pi and boot it.
 
-If you're really worried about data partition getting corrupted you could create two of them and keep them in sync them with [this script](/scripts/datasync/) (make sure they are `/dev/sda3` and `/dev/sda4` respectively).
-
-_Alternatively you can repartition instantly after flashing but first boot might fail (stuck on IO LED just being on) and you will have to manually reboot the Pi._
+If you're really worried about data partition getting corrupted you could create two of them and keep them in sync them with [this script](/scripts/datasync/) but this will increase the wear on the SD card (make sure they are `/dev/sda3` and `/dev/sda4` respectively).
+Good solution is to backup the data partition periodically - for example through [rclone-backup](https://github.com/jacklul/rclone-backup).
 
 ## Preparations
 
@@ -61,31 +60,24 @@ Tweak boot configuration:
 sudo nano /boot/config.txt
 ```
 ```
-# Comment out this line, we do not need audio
-#dtparam=audio=on
-
 # Reduce memory reserved for GPU
 gpu_mem=16
 
-# Pi Zero only: Invert ACT LED state
-# Saves 'some' power by keeping the LED in off state when powered on, still blinks on IO
-# (for 4.x.x kernel change 'off' to 'on')
+# Blink LED on activity, otherwise keep it off
 dtparam=act_led_activelow=off
+dtparam=act_led_trigger=actpwr
 
-# Disable LEDs permanently:
-#dtparam=act_led_trigger=none
-#dtparam=act_led_activelow=off
-#dtparam=pwr_led_trigger=none
-#dtparam=pwr_led_activelow=off
-
-# Enable hardware watchdog, automatic reboots when device hangs
-dtparam=watchdog=on
+# Disable audio, unless you're going to use it
+dtparam=audio=off
 
 # Disable Bluetooth, unless you're going to use it
 dtoverlay=disable-bt
 
 # Disable WiFi, unless you're going to use it
 dtoverlay=disable-wifi
+
+# Enable hardware watchdog, automatic reboots when device hangs
+dtparam=watchdog=on
 ```
 
 Disable HDMI on boot: 
@@ -94,29 +86,20 @@ sudo nano /etc/rc.local
 ```
 ```
 # Disable HDMI port
-/opt/vc/bin/tvservice -o
+/opt/vc/bin/tvservice -o # For Buster
+/usr/bin/tvservice -o # For Bullseye
 
 exit 0
 ```
 
-Install `watchdog`:
+Configure watchdog:
 ```bash
-sudo apt install watchdog
-```
-
-Modify it's config:
-```bash
-sudo nano /etc/watchdog.conf
+sudo nano /etc/systemd/system.conf
 ```
 ```
-watchdog-device = /dev/watchdog
-max-load-1 = 24
-watchdog-timeout = 15
-```
-
-Start it and enable on boot:
-```bash
-sudo systemctl start watchdog && sudo systemctl enable watchdog
+RuntimeWatchdogSec=15
+RebootWatchdogSec=5min
+ShutdownWatchdogSec=5min
 ```
 
 Disable SWAP:
@@ -125,14 +108,13 @@ sudo dphys-swapfile swapoff
 sudo dphys-swapfile uninstall
 sudo systemctl disable dphys-swapfile.service
 ```
-_You can re-enable it later by reconfiguring it to use the data partition, if you really need it._
+_You can re-enable it later and reconfigure it to use the `/data` partition._
 
-Other stuff to uninstall and disable:
+Other stuff to disable:
 
 ```bash
-sudo apt remove --purge --autoremove fake-hwclock triggerhappy
-
 # Not needed on headless system
+sudo systemctl disable triggerhappy
 sudo systemctl disable console-setup.service
 
 # No point for these to run since APT can't run on read-only filesystem
@@ -144,21 +126,75 @@ sudo systemctl disable apt-daily-upgrade.service
 
 ## Setting up the read-only mode
 
+Check the permissions of the directories we are about to move to `tmpfs`:
+```bash
+stat -c "%a %U %G %n" /mnt /var/log /var/mail /var/spool/rsyslog /tmp /var/lib/logrotate
+```
+
 Edit `/etc/fstab` (`PARTUUID` might be different - adjust accordingly):
 ```
-proc                  /proc  proc  defaults                                   0 0
-PARTUUID=6c586e13-01  /boot  vfat  defaults,ro                                0 2
-PARTUUID=6c586e13-02  /      ext4  defaults,noatime,ro                        0 1
-PARTUUID=6c586e13-03  /data  ext4  defaults,noatime,nofail,errors=remount-ro  0 2
+proc                  /proc  proc  defaults                   0 0
+PARTUUID=6c586e13-01  /boot  vfat  ro                         0 2
+PARTUUID=6c586e13-02  /      ext4  noatime,ro                 0 1
+PARTUUID=6c586e13-03  /data  ext4  noatime,errors=remount-ro  0 2
 
 # RAMdisk
-tmpfs  /tmp      tmpfs  defaults,noatime,mode=1777,size=100M  0 0
-/tmp   /var/tmp  none   bind,nofail                           0 0
-tmpfs  /var/log  tmpfs  defaults,noatime,mode=0755            0 0
-tmpfs  /mnt      tmpfs  defaults,noatime,size=1M              0 0
+tmpfs  /mnt                tmpfs  nosuid,nodev,noexec,noatime,mode=0755,size=1M            0 0
+tmpfs  /var/lib/logrotate  tmpfs  nosuid,nodev,noexec,relatime,mode=0755,size=100K         0 0
+tmpfs  /var/log            tmpfs  nosuid,nodev,noexec,relatime,mode=0755,size=50M          0 0
+tmpfs  /var/mail           tmpfs  nosuid,nodev,noexec,relatime,mode=2775,gid=mail,size=1M  0 0
+tmpfs  /var/spool/rsyslog  tmpfs  nosuid,nodev,noexec,relatime,mode=0700,size=1M           0 0
+tmpfs  /tmp                tmpfs  nosuid,nodev,noexec,relatime,mode=1777,size=50%          0 0
+
+# Optional: system/apps might expect stuff here to survive the reboot process
+#/tmp   /var/tmp            none   bind                                                     0 0
 ```
 
 _You can increase /tmp size as you wish - I recommend setting it to max 50% of total RAM_
+
+Adjust the mounts permissions to match the output of the `stat` command from earlier!
+
+I include `noexec` for the added security but some stuff might not work with it properly on the `/tmp` and `/var/tmp` mounts, one known is APT install/upgrade process but you can workaround it by doing this:
+
+```bash
+sudo nano /etc/apt/apt.conf.d/50remount
+```
+```
+DPkg::Pre-Install-Pkgs {"/bin/mount -o remount,exec /tmp";};
+DPkg::Post-Invoke {"/bin/mount -o remount /tmp";};
+```
+
+---
+### If you're not going to be using static IP:
+
+<details>
+  <summary><b>Show instructions</b></summary>
+
+You will also want to add these to the `/etc/fstab`:
+```
+# This *might* be not required
+tmpfs  /var/lib/dhcp     tmpfs  nosuid,nodev,noexec,relatime,mode=0755,size=100K  0 0
+
+# For Buster
+tmpfs  /var/lib/dhcpcd5  tmpfs  nosuid,nodev,noexec,relatime,mode=0755,size=100K  0 0
+
+# For Bullseye
+tmpfs  /var/lib/dhcpcd5  tmpfs  nosuid,nodev,noexec,relatime,mode=0755,size=100K  0 0
+```
+
+Because `duid` will be generated after each boot the IPv6 address will not be stable so we have to fallback to the `hwaddr` option:
+```bash
+sudo nano /etc/dhcpcd.conf
+```
+```
+# Generate SLAAC address using the Hardware Address of the interface
+slaac hwaddr
+# OR generate Stable Private IPv6 Addresses based from the DUID
+#slaac private
+```
+</details>
+
+---
 
 Remount everything with `sudo mount -a`. 
 
@@ -168,70 +204,83 @@ sudo mount -o remount,rw /
 sudo mount -o remount,rw /boot
 ```
 
-We need to move some directories to the writable partition:
+We need to move some directories to the writable partition.
+
+First, check their permissions:
 ```bash
-# Home directories (optional, recommended)
-sudo cp -a /home /data
+stat -c "%a %U %G %n" /etc/ /home /var/ /var/lib/ /var/cache/ /etc/fake-hwclock.data /var/lib/systemd /var/tmp/
+```
 
-sudo mkdir -p /data/var/lib/
+Now create/move them:
+```bash
+sudo mkdir -p /data/etc/ -m 755
+sudo cp -ax /home /data
+sudo mkdir -p /data/var/ -m 755
+sudo mkdir -p /data/var/lib -m 755
+sudo mkdir -p /data/var/cache -m 755
+sudo cp -ax /etc/fake-hwclock.data  /data/etc
+sudo cp -ax /var/lib/systemd /data/var/lib
+sudo cp -ax /var/tmp /data/var
+```
+_Adjust these to match the output of the `stat` command from earlier!_
 
-# Required for systemd features to function properly
-sudo cp -a /var/lib/systemd /data/var/lib
-
-# Logrotate needs this to function (optional, recommended)
-sudo cp -a /var/lib/logrotate /data/var/lib
+Verify that the permissions match the previous `stat` command output:
+```bash
+stat -c "%a %U %G %n" /data/etc /data/home /data/var /data/var/lib /data/var/cache /data/etc/fake-hwclock.data /data/var/lib/systemd /data/var/tmp
 ```
 
 And add binds to `/etc/fstab`:
 ```
-# Required binds for read-only filesystem
-# System
-/data/home               /home               none  bind,nofail  0 0
-/data/var/lib/systemd    /var/lib/systemd    none  bind,nofail  0 0
-/data/var/lib/logrotate  /var/lib/logrotate  none  bind,nofail  0 0
+# Binds for read-only filesystem
+/data/etc/fake-hwclock.data  /etc/fake-hwclock.data  none  bind  0 0
+/data/home                   /home                   none  bind  0 0
+/data/var/backups            /var/backups            none  bind  0 0
+/data/var/lib/systemd        /var/lib/systemd        none  bind  0 0
+# If you moved /var/tmp to tmpfs comment this
+/data/var/tmp                /var/tmp                none  bind  0 0
 ```
 
 Apply changes - `sudo mount -a`.
 
-You might need to run these again:
+You will need to run these again:
 ```bash
 sudo mount -o remount,rw /
 sudo mount -o remount,rw /boot
 ```
 
-Add an override in **logrotate** configuration for all log files:
-
+Becase `fake-hwclock` is not able to access `/data/etc/fake-hwclock.data` in early boot stage the clock will be stuck too far into the past and `fsck` might force filesystem check which will delay the boot significantly, to fix this:
 ```bash
-sudo nano /etc/logrotate.conf
+sudo systemctl edit fake-hwclock.service
 ```
 ```
-# put a comment here
-#include /etc/logrotate.d
+[Unit]
+ConditionPathExists=/sbin/debugfs
 
-# system-specific logs may be also be configured here.
-
-# For read-only filesystem
-/var/log/*
-/var/log/**/*
-{
-  daily
-  rotate 1
-  minsize 1M
-  copytruncate
-  compress
-  notifempty
-}
+[Service]
+Environment="FILE=/run/fake-hwclock.data"
+ExecStartPre=/bin/sh -c "debugfs -R \"cat /etc/fake-hwclock.data\" /dev/mmcblk0p3 > /run/fake-hwclock.data"
 ```
+Make sure `e2fsprogs` package is installed!
 
-Add prompt indicator whenever we're running in read only or writable system and helper functions:
+Now add prompt indicator whenever we're running in read only or writable system and helper functions:
 ```bash
 sudo nano /etc/bash.bashrc
 ```
 ```
+# Aliases to quickly switch between read-only and read-write rootfs
 alias ro='sudo mount -o remount,ro / && sudo mount -o remount,ro /boot && echo "System is now read only"'
 alias rw='sudo mount -o remount,rw / && sudo mount -o remount,rw /boot && echo "System is now writable"'
 
-# Credits to https://medium.com/swlh/make-your-raspberry-pi-file-system-read-only-raspbian-buster-c558694de79#8c4f
+# This function (un)mounts rootfs as /mnt/rootfs skipping all bind mounts
+rfs() {
+	if ! mount | grep /mnt/rootfs > /dev/null; then
+		sudo mkdir -p /mnt/rootfs && sudo mount --bind / /mnt/rootfs && echo "Mounted rootfs without binds on /mnt/rootfs"
+	else
+		sudo umount /mnt/rootfs && sudo rmdir /mnt/rootfs && echo "Unmounted /mnt/rootfs"
+	fi
+}
+
+# Add rootfs state indicator to command prompt
 set_bash_prompt() {
 	fs_mode=$(mount | sed -n -e "s/^\/dev\/.* on \/ .*(\(r[w|o]\).*/\1/p")
 	PS1='\[\033[01;32m\]\u@\h${fs_mode:+($fs_mode)}\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
@@ -241,9 +290,13 @@ PROMPT_COMMAND=set_bash_prompt
 
 Credits for this go to [Andreas Schallwig](https://medium.com/swlh/make-your-raspberry-pi-file-system-read-only-raspbian-buster-c558694de79#8c4f).
 
-## Synchronizing data partitions (optional)
+## Synchronizing data partitions (optional, not recommended)
+
+<details>
+  <summary><b>Show instructions</b></summary>
 
 If you created two data partitions it will be a good idea to keep them synchronized in case of failure.
+**Keep in mind that this will decrease SD card life significantly!**
 
 Install [this script](/scripts/datasync/) - whenever primary `/data` partition gets corrupted you will be able to replace `PARTUUID=6c586e13-03` in `/etc/fstab` with `PARTUUID=6c586e13-04` to use the backup partition, then fix or reformat the original one and synchronize the data. The script will detect which data partition is currently mounted and will always synchronize to the second.
 
@@ -259,8 +312,12 @@ sudo nano /etc/datasync-ignore.list
 # Cached adlists
 /etc/pihole/*.domains
 ```
+</details>
 
 ## Backing up data partition (optional)
+
+<details>
+  <summary><b>Show instructions</b></summary>
 
 [This script will backup /data to any location](/scripts/databackup), like network share or USB device.
 
@@ -286,11 +343,11 @@ sudo nano /etc/databackup-ignore.list
 # Cached adlists
 /etc/pihole/*.domains
 ```
-
+</details>
 
 ## Final touch
 
-Edit boot command line and add `ro` parameter:
+Edit boot command line and add `ro` parameter at the end:
 
 ```bash
 sudo nano /boot/cmdline.txt

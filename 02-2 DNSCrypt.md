@@ -23,12 +23,10 @@ It's because it tries to use the same port as Pi-Hole, you can ignore it and pro
 Only when [followed this](/01%20Read-only%20system.md)!
 
 ```bash
-sudo mkdir -p /data/etc
-sudo mkdir -p /data/var/cache
-sudo mkdir -p /var/cache/dnscrypt-proxy
+# Check permissions with `stat -c "%a %U %G %n" /var/cache/`
+sudo mkdir -p /data/var/cache -m 755
 
-sudo cp -a /etc/dnscrypt-proxy /data/etc
-sudo cp -a /var/cache/dnscrypt-proxy /data/var/cache
+sudo cp -ax /var/cache/dnscrypt-proxy /data/var/cache
 ```
 
 ```bash
@@ -36,8 +34,7 @@ sudo nano /etc/fstab
 ```
 ```
 # DNSCrypt
-/data/etc/dnscrypt-proxy        /etc/dnscrypt-proxy        none  bind,nofail  0 0
-/data/var/cache/dnscrypt-proxy  /var/cache/dnscrypt-proxy  none  bind,nofail  0 0
+/data/var/cache/dnscrypt-proxy  /var/cache/dnscrypt-proxy  none  bind  0 0
 ```
 
 ```bash
@@ -147,7 +144,11 @@ sudo systemctl stop dnscrypt-proxy.service
 sudo systemctl disable dnscrypt-proxy-resolvconf.service
 sudo systemctl disable dnscrypt-proxy.socket
 sudo systemctl disable dnscrypt-proxy.service
+```
 
+---
+
+```bash
 cd /etc/dnscrypt-proxy/
 sudo dnscrypt-proxy -service install
 sudo systemctl start dnscrypt-proxy.service
