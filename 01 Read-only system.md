@@ -114,7 +114,7 @@ Other stuff to disable:
 
 ```bash
 # Not needed on headless system
-sudo systemctl disable triggerhappy
+sudo systemctl disable triggerhappy.service
 sudo systemctl disable console-setup.service
 
 # No point for these to run since APT can't run on read-only filesystem
