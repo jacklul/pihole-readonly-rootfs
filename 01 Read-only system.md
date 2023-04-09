@@ -253,12 +253,9 @@ Becase `fake-hwclock` is not able to access `/data/etc/fake-hwclock.data` in ear
 sudo systemctl edit fake-hwclock.service
 ```
 ```
-[Unit]
-ConditionPathExists=/sbin/debugfs
-
 [Service]
 Environment="FILE=/run/fake-hwclock.data"
-ExecStartPre=/bin/sh -c "debugfs -R \"cat /etc/fake-hwclock.data\" /dev/mmcblk0p3 > /run/fake-hwclock.data"
+ExecStartPre=-/bin/sh -c "debugfs -R \"cat /etc/fake-hwclock.data\" /dev/mmcblk0p3 2>/dev/null > /run/fake-hwclock.data"
 ```
 Make sure `e2fsprogs` package is installed!
 
