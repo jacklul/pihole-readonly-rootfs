@@ -179,7 +179,7 @@ tmpfs  /var/lib/dhcp     tmpfs  nosuid,nodev,noexec,relatime,mode=0755,size=100K
 tmpfs  /var/lib/dhcpcd5  tmpfs  nosuid,nodev,noexec,relatime,mode=0755,size=100K  0 0
 
 # For Bullseye
-tmpfs  /var/lib/dhcpcd5  tmpfs  nosuid,nodev,noexec,relatime,mode=0755,size=100K  0 0
+tmpfs  /var/lib/dhcpcd  tmpfs  nosuid,nodev,noexec,relatime,mode=0755,size=100K  0 0
 ```
 
 Because `duid` will be generated after each boot the IPv6 address will not be stable so we have to fallback to the `hwaddr` option:
