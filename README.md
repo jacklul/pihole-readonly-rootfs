@@ -11,4 +11,4 @@ This significantly reduces the risk of bricking your project.
 	- [DNSCrypt (DNS over HTTPS)](/02-2%20DNSCrypt.md)
 	- [Cloudflared (DNS over HTTPS)](/02-3%20Cloudflared.md)
 
-_Guides last updated: 05-02-2023_
+_Guides last updated: 09-04-2023_
